@@ -1,0 +1,68 @@
+<html></html>
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Leaflet Map with Random Points</title>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+   <style>
+       #map { height: 400px; width: 100%; }
+       #point-info { margin-top: 20px; font-family: Arial, sans-serif; }
+   </style>
+</head>
+<body>
+
+
+<div id="map"></div>
+<div id="point-info">
+   <p>Point 1: <span id="point1-coords"></span> - Location: <span id="point1-location"></span></p>
+   <p>Point 2: <span id="point2-coords"></span> - Location: <span id="point2-location"></span></p>
+   <p>Point 3: <span id="point3-coords"></span> - Location: <span id="point3-location"></span></p>
+</div>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+   const mapInstance = L.map('map').setView([37.5, -95], 4);
+
+
+   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+       maxZoom: 19,
+       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+   }).addTo(mapInstance);
+
+
+   function generateRandom(from, to, fixed) {
+       return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+   }
+
+
+   const randomCoords = [
+       { lat: generateRandom(30, 35, 3), lng: generateRandom(-90, -100, 3) },
+       { lat: generateRandom(30, 35, 3), lng: generateRandom(-90, -100, 3) },
+       { lat: generateRandom(30, 35, 3), lng: generateRandom(-90, -100, 3) }
+   ];
+
+
+   randomCoords.forEach((coord, index) => {
+       const pointMarker = L.marker([coord.lat, coord.lng]).addTo(mapInstance);
+
+
+       document.getElementById(`point${index + 1}-coords`).textContent = `(${coord.lat}, ${coord.lng})`;
+
+
+       fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coord.lat}&longitude=${coord.lng}&localityLanguage=en`)
+           .then(response => response.json())
+           .then(data => {
+               const location = data.locality || data.city || "Not available";
+               document.getElementById(`point${index + 1}-location`).textContent = location;
+               pointMarker.bindPopup(`Location: ${location}`).openPopup();
+           })
+           .catch(error => console.error('Error fetching location:', error));
+   });
+</script>
+
+
+</body>
+</html>
